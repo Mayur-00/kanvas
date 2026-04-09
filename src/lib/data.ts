@@ -1,0 +1,2 @@
+export const colors = ["black", "green", "red", "orange", "blue", "yellow", "white","pink", "lime", "aqua", "navy", "coral", "teal", "silver", "violet", "gray", "brown", "indigo", 'gold', "maroon","tan", "beige", "emerald", "salmon", 'lavender' ];
+export const strokeWidth = [2, 5 , 10, 15, 20];

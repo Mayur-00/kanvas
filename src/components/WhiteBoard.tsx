@@ -1,91 +1,103 @@
 "use client";
-import { DropdownMenu } from "radix-ui";
+import { useWhiteBoard } from "@/stores/whiteboard.store";
+import { Point } from "@/types/types";
 import { useRef, useEffect, useState } from "react";
 import { io } from "socket.io-client";
+import NavBar from "./whiteboard/NavBar";
 
-type ShapeType = "pen" | "circle" | "rectangle" | "line";
 
-interface Point {
-  x: number;
-  y: number;
-};
-const colors = ["black", "green", "red", "orange", "blue", "yellow", "white", ];
-const strokeWidth = [2, 5 , 10, 15, 20];
+
+
+
 
 export default function Whiteboard() {
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const socketRef = useRef(io("http://localhost:5000"));
-  const [drawing, setDrawing] = useState(false);
-  const [shapeType, setShapeType] = useState<ShapeType>("pen");
-  const [startPoint, setStartPoint] = useState<Point | null>(null);
+  // const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const canvasImageRef = useRef<ImageData | null>(null);
-  const lastRemotePointRef = useRef<Point | null>(null);
+  // const socketRef = useRef(io("http://localhost:5000"));
+
+  // const lastRemotePointRef = useRef<Point | null>(null);
+
   const roomId = "1";
-  const [selectedColor, setSelectedColor] = useState("black");
-  const [selectedStrokeWidth, setSelectedStrokeWidth] = useState(20);
-  const [strokeDropdown, setStrokeDropdown] = useState(false);
+  const {setDrawingTrue, setDrawingFalse, setStartPoint} = useWhiteBoard();
+  const shapeType = useWhiteBoard((state)=>state.shapeType);
+  const drawing = useWhiteBoard((state)=>state.isDrawing);
+  const selectedStrokeWidth = useWhiteBoard((state)=>state.selectedStrokeWidth);
+  const startPoint = useWhiteBoard((state)=>state.startPoint);
+  const selectedColor = useWhiteBoard((state)=>state.selectedColor);
+  const canvasRef = useWhiteBoard((state) => state.canvasRef) as React.RefObject<HTMLCanvasElement> | null
+
+  
+
 
 
   useEffect(() => {
+    if(!canvasRef){
+      return;
+    }
+    console.log(canvasRef)
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    const socket = socketRef.current;
+    // const socket = socketRef.current;
 
     ctx.lineCap = "round";
     ctx.lineWidth = selectedStrokeWidth;
     ctx.strokeStyle = selectedColor;
 
-    socket.on("start-drawing", (currentPoint:Point, color:string) => {
-      ctx.beginPath();
-      ctx.strokeStyle = color;
-      ctx.moveTo(currentPoint.x, currentPoint.y);
+//     socket.on("start-drawing", (currentPoint:Point, color:string) => {
+//       ctx.beginPath();
+//       ctx.strokeStyle = color;
+//       ctx.moveTo(currentPoint.x, currentPoint.y);
 
-      lastRemotePointRef.current = currentPoint;
-    })
+//       lastRemotePointRef.current = currentPoint;
+//     })
 
-    socket.on("draw", ({currentPoint, color}) => {
-      console.log("draw event received", currentPoint);
+//     socket.on("draw", ({currentPoint, color}) => {
+//       console.log("draw event received", currentPoint);
 
-      const lastPoint = lastRemotePointRef.current;
-      ctx.strokeStyle =color
-      if (!lastPoint) {
-        // Start a new path
-        ctx.beginPath();
-        ctx.moveTo(currentPoint.x, currentPoint.y);
-      } else {
-        // Continue from last point
-        ctx.lineTo(currentPoint.x, currentPoint.y);
-        ctx.stroke();
+//       const lastPoint = lastRemotePointRef.current;
+//       ctx.strokeStyle =color
+//       if (!lastPoint) {
+//         // Start a new path
+//         ctx.beginPath();
+//         ctx.moveTo(currentPoint.x, currentPoint.y);
+//       } else {
+//         // Continue from last point
+//         ctx.lineTo(currentPoint.x, currentPoint.y);
+//         ctx.stroke();
        
-      }
-      lastRemotePointRef.current = currentPoint;
-    });
+//       }
+//       lastRemotePointRef.current = currentPoint;
+//     });
 
-    socket.on("stop-drawing", () => {
-      ctx.strokeStyle = selectedColor;
-  lastRemotePointRef.current = null;
-});
+//     socket.on("stop-drawing", () => {
+//       ctx.strokeStyle = selectedColor;
+//   lastRemotePointRef.current = null;
+// });
 
-    socket.on("user-joined", (socketId: string) => {
-      console.log("user joined", socketId);
-    });
+//     socket.on("user-joined", (socketId: string) => {
+//       console.log("user joined", socketId);
+//     });
 
-    socket.on("connected", () => {
-      console.log("connected to server");
-      socket.emit("join-room", roomId);
-    });
+//     socket.on("connected", () => {
+//       console.log("connected to server");
+//       socket.emit("join-room", roomId);
+//     });
 
-    return () => {
-      socket.off("draw");
-      socket.off("connected");
-      socket.off('stop-drawing');
-    };
+//     return () => {
+//       socket.off("draw");
+//       socket.off("connected");
+//       socket.off('stop-drawing');
+//     };
+  // }, [selectedColor, selectedStrokeWidth]);
   }, [selectedColor, selectedStrokeWidth]);
 
   const startDrawing = (e: React.MouseEvent<HTMLCanvasElement>) => {
+      if(!canvasRef){
+      return;
+    }
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
@@ -116,16 +128,16 @@ export default function Whiteboard() {
       ctx.beginPath();
       ctx.moveTo(point.x, point.y);
     }
-     socketRef.current.emit("start-drawing", { roomId, point, color:selectedColor });
+    //  socketRef.current.emit("start-drawing", { roomId, point, color:selectedColor });
 
-    setDrawing(true);
+    setDrawingTrue()
   };
 
   const stopDrawing = () => {
-    setDrawing(false);
+    setDrawingFalse();
     setStartPoint(null);
-    socketRef.current.emit("stop-drawing", roomId)
-    lastRemotePointRef.current = null;
+    // socketRef.current.emit("stop-drawing", roomId)
+    // lastRemotePointRef.current = null;
   };
 
     const paintRectangle = (
@@ -153,6 +165,9 @@ export default function Whiteboard() {
   const draw = (e: React.MouseEvent<HTMLCanvasElement>) => {
     if (!drawing) return;
 
+      if(!canvasRef){
+      return;
+    }
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
@@ -171,7 +186,7 @@ export default function Whiteboard() {
 
     if (shapeType === "pen") {
       paintPen(canvas, currentPoint);
-      socketRef.current.emit("draw", { roomId, currentPoint, color:selectedColor });
+      // socketRef.current.emit("draw", { roomId, currentPoint, color:selectedColor });
     } else if (startPoint) {
       // For shapes, restore canvas and redraw
       if (canvasImageRef.current) {
@@ -198,6 +213,9 @@ export default function Whiteboard() {
   };
 
   const clear = () => {
+      if(!canvasRef){
+      return;
+    }
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
@@ -207,76 +225,8 @@ export default function Whiteboard() {
   };
 
   return (
-    <div className="flex flex-col gap-4 ">
-      <div className="flex gap-2 p-2 items-center ">
-        <button
-          onClick={() => setShapeType("pen")}
-          className={`px-4 py-2 rounded ${
-            shapeType === "pen"
-              ? "bg-blue-600 text-white"
-              : "bg-gray-200 hover:bg-gray-300"
-          }`}
-        >
-          ✏️ Pen
-        </button>
-        <button
-          onClick={() => setShapeType("line")}
-          className={`px-4 py-2 rounded ${
-            shapeType === "line"
-              ? "bg-blue-600 text-white"
-              : "bg-gray-200 hover:bg-gray-300"
-          }`}
-        >
-          📏 Line
-        </button>
-        <button
-          onClick={() => setShapeType("rectangle")}
-          className={`px-4 py-2 rounded ${
-            shapeType === "rectangle"
-              ? "bg-blue-600 text-white"
-              : "bg-gray-200 hover:bg-gray-300"
-          }`}
-        >
-          ▭ Rectangle
-        </button>
-        <button
-          onClick={() => setShapeType("circle")}
-          className={`px-4 py-2 rounded ${
-            shapeType === "circle"
-              ? "bg-blue-600 text-white"
-              : "bg-gray-200 hover:bg-gray-300"
-          }`}
-        >
-          ⭕ Circle
-        </button>
-        <button
-          onClick={clear}
-          className="px-4 py-2 rounded bg-red-500 hover:bg-red-600 text-white"
-        >
-          🗑️ Clear
-        </button>
-
-        <div className="h-15 w-50 border border-zinc-300 rounded p-2 grid grid-cols-8">
-          {
-            colors.map((color) =>(
-              <button key={color} onClick={()=>setSelectedColor(color)} style={{backgroundColor:color}} className={`h-5 w-5 rounded cursor-pointer ${selectedColor === color ? 'outline-2':'outline-0'} outline-gray-200`}></button>
-            ))
-          }
-    
-        </div>
-        <div className="h-10 w-10 border border-zinc-200 flex items-center justify-center relative" onClick={()=>setStrokeDropdown(!strokeDropdown)}><div style={{height:`${selectedStrokeWidth}px`, width:`${selectedStrokeWidth}px`, backgroundColor:selectedColor}} className={` rounded-full outline-2 outline-gray-300  `}></div>
-         <div className={`w-10 h-auto bg-gray-500  z-50 ${strokeDropdown ? "absolute -right-15 -bottom-30" :"hidden" } `}>
-          <div className="h-full w-full flex flex-col items-center justify-center">
-            {strokeWidth.map((width) => (
-              <div className="h-8 w-full bg-white flex items-center justify-center border border-zinc-200 " key={width} onClick={()=>{setSelectedStrokeWidth(width),setStrokeDropdown(false)}}> 
-              <div style={{height:`${width}px`, width:`${width}px`, backgroundColor:selectedColor}} className={` rounded-full outline-2 outline-gray-300  `}></div></div>
-            ))}
-            </div> 
-          </div></div>
-       
-
-      </div>
-
+    <div className="flex flex-col gap-4 items-center ">
+     <NavBar/>
       <canvas
         ref={canvasRef}
         width={800}
@@ -286,6 +236,7 @@ export default function Whiteboard() {
         onMouseUp={stopDrawing}
         onMouseMove={draw}
         onMouseLeave={stopDrawing}
+        onClick={(e)=>console.log(e)}
       />
     </div>
   );
