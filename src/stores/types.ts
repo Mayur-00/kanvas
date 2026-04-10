@@ -1,4 +1,4 @@
-import { Point } from "@/types/types";
+import { Point, StrokeElemType } from "@/types/types";
 import { Socket } from "socket.io-client";
 import { createRef, Ref } from 'react';
 export interface WhiteBoardStoreIntercface {
@@ -9,6 +9,8 @@ export interface WhiteBoardStoreIntercface {
   selectedColor:string;
   selectedStrokeWidth:number;
   shapeType:string;
+  strokesArray:StrokeElemType[];
+  redoArray:StrokeElemType[];
 
 
   setDrawingTrue: ()=>void
@@ -17,6 +19,9 @@ export interface WhiteBoardStoreIntercface {
   setColor: (color:string) =>void,
   setStrokeWidth: (width:number)=>void,
   setShapeType: (type:string) => void
+  pushStrokesInArray: (stroke:StrokeElemType) => void,
+  pullStrokesOutOfArray: ()=> void;
+  redoStrokesArray: ()=> void;
 
 
 };
