@@ -2,6 +2,7 @@
 import { useWhiteBoard } from "@/stores/whiteboard.store";
 import { useRef, useEffect } from "react";
 import NavBar from "./whiteboard/NavBar";
+import { calculateCursorCord } from "@/helpers/whiteboard.helper";
 
 export default function Whiteboard() {
   const canvasImageRef = useRef<ImageData | null>(null);
@@ -13,16 +14,21 @@ export default function Whiteboard() {
     pushStrokesInArray,
     paintCanvas,
     setCurrentStroke,
+    pullStrokesOutOfArray,
+    redoStrokesArray,
   } = useWhiteBoard();
 
   const shapeType = useWhiteBoard((state) => state.shapeType);
   const drawing = useWhiteBoard((state) => state.isDrawing);
-  const selectedStrokeWidth = useWhiteBoard((state) => state.selectedStrokeWidth);
+  const selectedStrokeWidth = useWhiteBoard(
+    (state) => state.selectedStrokeWidth,
+  );
   const selectedColor = useWhiteBoard((state) => state.selectedColor);
-  const strokesArray = useWhiteBoard((state) => state.strokesArray);
   const currentStroke = useWhiteBoard((state) => state.currentStroke);
 
-  const canvasRef = useWhiteBoard((state) => state.canvasRef) as React.RefObject<HTMLCanvasElement> | null;
+  const canvasRef = useWhiteBoard(
+    (state) => state.canvasRef,
+  ) as React.RefObject<HTMLCanvasElement> | null;
 
   useEffect(() => {
     if (!canvasRef) {
@@ -86,6 +92,7 @@ export default function Whiteboard() {
     //     };
     // }, [selectedColor, selectedStrokeWidth]);
   }, [selectedColor, selectedStrokeWidth]);
+
   const startDrawing = (e: React.MouseEvent<HTMLCanvasElement>) => {
     if (!canvasRef) {
       return;
@@ -97,22 +104,10 @@ export default function Whiteboard() {
 
     ctx.strokeStyle = selectedColor;
 
-    // Save current canvas state for shape preview
-    canvasImageRef.current = ctx.getImageData(
-      0,
-      0,
-      canvas.width,
-      canvas.height,
+    const point = calculateCursorCord(
+      { x: e.nativeEvent.clientX, y: e.nativeEvent.clientY },
+      canvas,
     );
-
-    const rect = canvas.getBoundingClientRect();
-    const scaleX = canvas.width / rect.width;
-    const scaleY = canvas.height / rect.height;
-
-    const point = {
-      x: (e.nativeEvent.clientX - rect.left) * scaleX,
-      y: (e.nativeEvent.clientY - rect.top) * scaleY,
-    };
 
     setStartPoint(point);
 
@@ -150,17 +145,12 @@ export default function Whiteboard() {
 
     setDrawingFalse();
     setStartPoint(null);
-    // console.log(currentStroke);
 
     if (!currentStroke) {
       console.log("no current stroke");
       return;
     }
     pushStrokesInArray(currentStroke!);
-
-    strokesArray.forEach((stroke) => {
-      console.log(stroke);
-    });
 
     setCurrentStroke(null);
     // socketRef.current.emit("stop-drawing", roomId)
@@ -177,14 +167,10 @@ export default function Whiteboard() {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    const rect = canvas.getBoundingClientRect();
-    const scaleX = canvas.width / rect.width;
-    const scaleY = canvas.height / rect.height;
-
-    const currentPoint = {
-      x: (e.nativeEvent.clientX - rect.left) * scaleX,
-      y: (e.nativeEvent.clientY - rect.top) * scaleY,
-    };
+    const currentPoint = calculateCursorCord(
+      { x: e.nativeEvent.clientX, y: e.nativeEvent.clientY },
+      canvas,
+    );
 
     if (!currentStroke) {
       return;
@@ -226,6 +212,18 @@ export default function Whiteboard() {
     // }
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    console.log(e);
+
+    if (e.ctrlKey && e.key === "z") {
+      pullStrokesOutOfArray();
+      paintCanvas();
+    } else if (e.ctrlKey && e.key === "y") {
+      redoStrokesArray();
+      paintCanvas();
+    }
+  };
+
   return (
     <div className="flex flex-col gap-4 items-center h-full w-full ">
       <NavBar />
@@ -233,11 +231,13 @@ export default function Whiteboard() {
         ref={canvasRef}
         width={1360}
         height={500}
+        tabIndex={0}
         className=" bg-white cursor-crosshair"
         onMouseDown={startDrawing}
         onMouseUp={stopDrawing}
         onMouseMove={draw}
         onMouseLeave={stopDrawing}
+        onKeyDown={handleKeyDown}
       />
     </div>
   );

@@ -11,7 +11,7 @@ export const useWhiteBoard = create<WhiteBoardStoreIntercface>((set, get) => ({
   selectedColor: "black",
   selectedStrokeWidth: 2,
   shapeType: "pen",
-  currentStroke:null,
+  currentStroke: null,
   strokesArray: [],
   redoArray: [],
 
@@ -21,7 +21,8 @@ export const useWhiteBoard = create<WhiteBoardStoreIntercface>((set, get) => ({
   setColor: (color: string) => set({ selectedColor: color }),
   setStrokeWidth: (width: number) => set({ selectedStrokeWidth: width }),
   setShapeType: (type: string) => set({ shapeType: type }),
-  setCurrentStroke: (stroke:StrokeElemType|null) => set({currentStroke:stroke}),
+  setCurrentStroke: (stroke: StrokeElemType | null) =>
+    set({ currentStroke: stroke }),
   pushStrokesInArray: (stroke: StrokeElemType) => {
     const { strokesArray } = get();
 
@@ -29,18 +30,20 @@ export const useWhiteBoard = create<WhiteBoardStoreIntercface>((set, get) => ({
   },
   pullStrokesOutOfArray: () => {
     const { strokesArray, redoArray } = get();
+    if (strokesArray.length === 0) return;
 
     redoArray.push(strokesArray.pop()!);
   },
   redoStrokesArray: () => {
     const { strokesArray, redoArray } = get();
+    if (redoArray.length === 0) return;
 
     strokesArray.push(redoArray.pop()!);
   },
   paintCanvas: () => {
     const { canvasRef, isDrawing, strokesArray, currentStroke } = get();
 
-    const canvass = canvasRef as React.RefObject<HTMLCanvasElement> 
+    const canvass = canvasRef as React.RefObject<HTMLCanvasElement>;
 
     if (!canvass) {
       return;
@@ -57,12 +60,14 @@ export const useWhiteBoard = create<WhiteBoardStoreIntercface>((set, get) => ({
 
     allStrokes.forEach((stroke) => {
       ctx.beginPath();
-      if(stroke === undefined){
+      if (stroke === undefined) {
         return;
-      };
+      }
 
       if (stroke.type === "pen") {
         stroke.points.forEach((point, index) => {
+          ctx.strokeStyle = stroke.color;
+          ctx.lineWidth = stroke.width;
           if (index === 0) {
             ctx.moveTo(point.x, point.y);
           } else {
@@ -72,7 +77,8 @@ export const useWhiteBoard = create<WhiteBoardStoreIntercface>((set, get) => ({
       } else if (stroke.type === "rectangle") {
         const { startPoint, endPoint } = stroke;
         if (!startPoint || !endPoint) return;
-
+        ctx.strokeStyle = stroke.color;
+        ctx.lineWidth = stroke.width;
         const x = Math.min(startPoint.x, endPoint.x);
         const y = Math.min(startPoint.y, endPoint.y);
         const w = Math.abs(endPoint.x - startPoint.x);
@@ -82,6 +88,8 @@ export const useWhiteBoard = create<WhiteBoardStoreIntercface>((set, get) => ({
       } else if (stroke.type === "circle") {
         const { startPoint, endPoint } = stroke;
         if (!startPoint || !endPoint) return;
+        ctx.strokeStyle = stroke.color;
+         ctx.lineWidth = stroke.width;
         const radius = Math.sqrt(
           Math.pow(endPoint.x - startPoint.x, 2) +
             Math.pow(endPoint.y - startPoint.y, 2),
@@ -90,6 +98,8 @@ export const useWhiteBoard = create<WhiteBoardStoreIntercface>((set, get) => ({
       } else if (stroke.type === "line") {
         const { startPoint, endPoint } = stroke;
         if (!startPoint || !endPoint) return;
+        ctx.strokeStyle = stroke.color;
+         ctx.lineWidth = stroke.width;
         ctx.moveTo(startPoint.x, startPoint.y);
         ctx.lineTo(endPoint.x, endPoint.y);
       }
