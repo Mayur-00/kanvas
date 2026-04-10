@@ -9,6 +9,7 @@ export interface WhiteBoardStoreIntercface {
   selectedColor:string;
   selectedStrokeWidth:number;
   shapeType:string;
+  currentStroke:StrokeElemType | null;
   strokesArray:StrokeElemType[];
   redoArray:StrokeElemType[];
 
@@ -20,8 +21,10 @@ export interface WhiteBoardStoreIntercface {
   setStrokeWidth: (width:number)=>void,
   setShapeType: (type:string) => void
   pushStrokesInArray: (stroke:StrokeElemType) => void,
+  setCurrentStroke: (stroke:StrokeElemType | null) =>void
   pullStrokesOutOfArray: ()=> void;
   redoStrokesArray: ()=> void;
+  paintCanvas: ()=>void
 
 
 };

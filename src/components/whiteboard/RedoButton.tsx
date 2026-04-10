@@ -6,7 +6,11 @@ import React from 'react'
 
 const RedoButton = () => {
 
-  const {redoArray, redoStrokesArray, canvasRef} = useWhiteBoard();
+  const {redoArray, redoStrokesArray, paintCanvas} = useWhiteBoard();
+  const canvasRef = useWhiteBoard(
+    (state) => state.canvasRef,
+  ) as React.RefObject<HTMLCanvasElement> | null;
+
    const redo = ()=> {
      console.log("redo cliecked");
 
@@ -20,15 +24,14 @@ const RedoButton = () => {
 
     redoStrokesArray();
 
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    drawStoredElems();
+    paintCanvas();
   }
 
   return (
       <button
-       
-        className="px-2 py-2 rounded text-black hover:bg-red-60 hover:bg-blue-200"
+      onClick={redo}
+      disabled={redoArray.length ===0}
+        className="px-2 py-2 rounded text-black hover:bg-red-60 hover:text-blue-400 hover:bg-blue-200 disabled:hover:bg-transparent disabled:cursor-not-allowed disabled:text-zinc-500"
       >
         <Redo2 className="size-4" />
       </button>
