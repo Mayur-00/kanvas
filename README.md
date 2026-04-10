@@ -31,7 +31,7 @@ A modern whiteboard canvas application built with Next.js. Kanvas is a simple an
 
 1. **Clone the repository**
 ```bash
-git clone <repository-url>
+git clone <https://github.com/Mayur-00/kanvas.git>
 cd get-roasted/client
 ```
 
