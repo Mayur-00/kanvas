@@ -15,6 +15,10 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Kanvas",
   description: "A modern, minimal and asthetic whiteboard app",
+  icons:{
+    icon:'/favicon.ico',
+    apple:"/apple-touch.png",
+  },
 };
 
 export default function RootLayout({
